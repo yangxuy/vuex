@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import Vuex from './vuex.js';
+import Vuex from './vuex';
 
 Vue.use(Vuex);
 
@@ -29,5 +29,46 @@ export default new Vuex.Store({
         commit('asyncCount', 11);
       }, 1000);
     }
+  },
+  modules: {
+    a: {
+      state: {
+        name: 'yx'
+      },
+      modules: {
+        c: {
+          state: {
+            sex: '男'
+          }
+        }
+      }
+    },
+    b: {
+      state: {
+        age: 24
+      }
+    }
   }
 });
+/**
+ * Module{
+ *   state:{
+ *     count:1,
+ *     a:Model{
+ *       state:{
+ *         name:'yx'
+ *       }
+ *     }
+ *   },
+ *   _children:[
+ *     Model{a}
+ *   ],
+ *   _rawModule:{
+ *     getters,
+ *     mutations,
+ *     modules,
+ *     actions,
+ *     state,
+ *   }
+ * }
+ * */

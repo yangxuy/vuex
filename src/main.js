@@ -10,7 +10,7 @@ new Vue({
   store,
   router,
   render: (h) => h(App),
-  created(){
-    console.log('根节点')
+  created() {
+    console.log('根节点');
   }
 }).$mount('#app');
