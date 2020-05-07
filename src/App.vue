@@ -34,12 +34,7 @@ export default {
       this.$store.dispatch('handlerDispatchCount', 2);
     }
   },
-  created() {
-    console.log(this.$store);
-    console.log('create 子节点APP');
-  },
   mounted() {
-    console.log('mounted 子节点APP');
   }
 };
 </script>

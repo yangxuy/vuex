@@ -7,7 +7,8 @@ import store from './store/index';
 
 
 new Vue({
+  name: 'app',
   store,
   router,
-  render: (h) => h(App)
+  render: (h) => h(App),
 }).$mount('#app');
