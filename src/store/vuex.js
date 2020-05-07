@@ -19,53 +19,11 @@ const forEachValue = (obj, fn) => {
   Object.keys(obj).forEach(key => fn(obj[key], key));
 };
 
-class Module {
+class VuexModule {
   constructor(rawModule) {
     this.state = rawModule.state;
     this._children = Object.create(null);
     this._rawModule = rawModule;
-  }
-
-  get namespaced() {
-    return !!this._rawModule.namespaced;
-  }
-
-  addChild(key, module) {
-    this._children[key] = module;
-  }
-
-  getChild(key) {
-    return this._children[key];
-  }
-
-  removeChild(key) {
-    delete this._children[key];
-  }
-
-  hasChild(key) {
-    return key in this._children;
-  }
-
-  forEachChild(fn) {
-    forEachValue(this._children, fn);
-  }
-
-  forEachGetter(fn) {
-    if (this._rawModule.getters) {
-      forEachValue(this._rawModule.getters, fn);
-    }
-  }
-
-  forEachAction(fn) {
-    if (this._rawModule.actions) {
-      forEachValue(this._rawModule.actions, fn);
-    }
-  }
-
-  forEachMutation(fn) {
-    if (this._rawModule.mutations) {
-      forEachValue(this._rawModule.mutations, fn);
-    }
   }
 }
 
@@ -74,20 +32,16 @@ class ModuleCollection {
     this.register([], options);
   }
 
-  get(path) {
-    return path.reduce((module, key) => {
-      return module.getChild(key);
-    }, this.root);
-  }
-
   register(path, rawModule) {
-    const newModule = new Module(rawModule);
+    const newModule = new VuexModule(rawModule);
     if (path.length === 0) {
       //当前是根节点
       this.root = newModule;
     } else {
-      const parent = this.get(path.slice(0, -1));
-      parent.addChild(path[path.length - 1], newModule);
+      const parent = path.slice(0, -1).reduce((module, current) => {
+        return this.root._children[current];
+      }, this.root);
+      parent._children[path[path.length - 1]] = newModule;
     }
     if (rawModule.modules) {
       forEachValue(rawModule.modules, (rawChildModule, key) => {
@@ -106,43 +60,22 @@ class Store {
         };
       }
     });
-
-    // this._modules = new ModuleCollection(options);
-    // console.log(this._modules);
-    let getters = options.getters || {};
+    this._modules = new ModuleCollection(options);
+    const state = this._modules.root.state;
 
     this.getters = {};
-    Object.keys(getters).forEach((key) => {
-      Object.defineProperty(this.getters, key, {
-        get: () => {
-          return getters[key](this.state);
-        }
-      });
-    });
-
-    let mutations = options.mutations || {};
     this.mutations = {};
-    Object.keys(mutations).forEach((key) => {
-      this.mutations[key] = (payload) => {
-        mutations[key](this.state, payload);
-      };
-    });
-
-    let actions = options.actions || {};
     this.actions = {};
-    Object.keys(actions).forEach((key) => {
-      this.actions[key] = (payload) => {
-        actions[key](this, payload);
-      };
-    });
+    this.modules = {};
+    installModule(this, state, [], this._modules.root);
   }
 
   commit = (methodsName, payload) => {
-    this.mutations[methodsName](payload);
+    this.mutations[methodsName].forEach(fn => fn(payload));
   };
 
-  dispatch(actionName, payload) {
-    this.actions[actionName](payload);
+  dispatch = (actionName, payload) => {
+    this.actions[actionName].forEach(fn => fn(payload));
   };
 
   get state() {
@@ -151,6 +84,55 @@ class Store {
 
 }
 
+const installModule = (store, rootState, path, module) => {
+  const isRoot = !path.length;
+  if (!isRoot) {
+    const parent = path.slice(0, -1).reduce((state, current) => {
+      return state[current];
+    }, rootState);
+    const moduleName = path[path.length - 1];
+    Vue.set(parent, moduleName, module.state);
+  }
+
+  let getters = module._rawModule.getters || {};
+  if (getters) {
+    Object.keys(getters).forEach((key) => {
+      Object.defineProperty(store.getters, key, {
+        get: () => {
+          return getters[key](module.state);
+        }
+      });
+    });
+  }
+
+  let mutations = module._rawModule.mutations || {};
+  if (mutations) {
+    forEachValue(mutations, (mutation, key) => {
+      let arr = store.mutations[key] || (store.mutations[key] = []);
+      arr.push((payload) => {
+        mutation(module.state, payload);
+      });
+    });
+  }
+
+  let actions = module._rawModule.actions || {};
+  if (actions) {
+    forEachValue(actions, (action, key) => {
+      let arr = store.actions[key] || (store.actions[key] = []);
+      arr.push((payload) => {
+        action(store, payload);
+      });
+    });
+  }
+
+  forEachValue(module._children, (child, key) => {
+    installModule(store, rootState, path.concat(key), child);
+  });
+};
+
+const getNestedState = (state, path) => {
+  return path.reduce((state, key) => state[key], state);
+};
 export default {
   install,
   Store

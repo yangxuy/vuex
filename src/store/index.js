@@ -26,7 +26,7 @@ export default new Vuex.Store({
   actions: {
     handlerDispatchCount({commit}, payload) {
       setTimeout(() => {
-        commit('asyncCount', 11);
+        commit('asyncCount', payload);
       }, 1000);
     }
   },
@@ -39,6 +39,16 @@ export default new Vuex.Store({
         c: {
           state: {
             sex: '男'
+          },
+          getters: {
+            getXX(state) {
+              return state.sex + 'xxx';
+            }
+          },
+          mutations: {
+            changeSex(state, payload) {
+              state.sex = payload;
+            }
           }
         }
       }
@@ -50,25 +60,3 @@ export default new Vuex.Store({
     }
   }
 });
-/**
- * Module{
- *   state:{
- *     count:1,
- *     a:Model{
- *       state:{
- *         name:'yx'
- *       }
- *     }
- *   },
- *   _children:[
- *     Model{a}
- *   ],
- *   _rawModule:{
- *     getters,
- *     mutations,
- *     modules,
- *     actions,
- *     state,
- *   }
- * }
- * */

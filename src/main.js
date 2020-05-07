@@ -9,8 +9,5 @@ import store from './store/index';
 new Vue({
   store,
   router,
-  render: (h) => h(App),
-  created() {
-    console.log('根节点');
-  }
+  render: (h) => h(App)
 }).$mount('#app');

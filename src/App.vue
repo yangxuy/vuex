@@ -2,7 +2,7 @@
     <div id="app">
         <span>学习时间：{{this.$store.state.count}}</span>
         <span>我的年龄：{{this.$store.getters.getAge}}</span>
-        <span>我的名字：{{this.$store.state.a.name}}</span>
+        <!--        <span>我的名字：{{this.$store.state.a.name}}</span>-->
         <div>
             <button @click="handlerAdd">添加</button>
             <button @click="handlerDel">减少</button>
@@ -35,7 +35,7 @@ export default {
     }
   },
   created() {
-    console.log(this.$store._modules);
+    console.log(this.$store);
     console.log('create 子节点APP');
   },
   mounted() {
